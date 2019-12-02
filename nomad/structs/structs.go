@@ -881,10 +881,10 @@ type DeriveVaultTokenResponse struct {
 // DeriveSITokenRequest is used to request Consul Service Identity tokens from
 // the Nomad Server for the named tasks in the given allocation.
 type DeriveSITokenRequest struct {
-	NodeID string
-	// SecretID (?)
-	AllocID string
-	Tasks   []string
+	NodeID   string
+	SecretID string
+	AllocID  string
+	Tasks    []string
 	QueryOptions
 }
 
