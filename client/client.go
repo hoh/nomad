@@ -2434,13 +2434,14 @@ func (c *Client) deriveToken(alloc *structs.Allocation, taskNames []string, vcli
 	return unwrappedTokens, nil
 }
 
+// deriveSIToken takes an allocation and a set of tasks and derives Consul
+// Service Identity tokens for each of the tasks by requesting them from the
+// Nomad Server.
 func (c *Client) deriveSIToken(alloc *structs.Allocation, taskNames []string) (map[string]string, error) {
 	tasks, err := verifiedTasks(c.logger, alloc, taskNames)
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("Client.deriveSIToken: tasks: %v\n", tasks)
 
 	req := &structs.DeriveSITokenRequest{
 		NodeID:       c.NodeID(),
@@ -2463,6 +2464,15 @@ func (c *Client) deriveSIToken(alloc *structs.Allocation, taskNames []string) (m
 		c.logger.Error("error deriving SI tokens", "error", "invalid_response")
 		return nil, fmt.Errorf("failed to derive SI tokens: invalid response")
 	}
+
+	// NOTE: Unlike with the Vault integration, Nomad Server replies with the
+	// actual Consul SI token (.SecretID), because otherwise each Nomad
+	// Client would need to be blessed with 'acl:write' permissions to read the
+	// secret value given the .AccessorID, which does not fit well in the Consul
+	// security model.
+	//
+	// https://www.consul.io/api/acl/tokens.html#read-a-token
+	// https://www.consul.io/docs/internals/security.html
 
 	m := helper.CopyMapStringString(resp.Tokens)
 	return m, nil
